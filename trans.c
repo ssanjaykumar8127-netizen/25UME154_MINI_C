@@ -34,6 +34,11 @@ void searchRecord(FILE *fPtr); // prototype for searchRecord
 void viewRecord(FILE *fPtr); // prototype for efficient viewRecord
 void bankStatistics(FILE *fPtr); // prototype for bank statistics
 
+// inline helper: returns 1 if account is valid (1-MAX_RECORDS), 0 otherwise
+static inline int isValidAccount(unsigned int acct) {
+    return (acct >= 1 && acct <= MAX_RECORDS);
+}
+
 int main(int argc, char *argv[])
 {
     FILE *cfPtr;         // credit.dat file pointer
