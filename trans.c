@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#define MAX_RECORDS 100 // maximum number of accounts supported
+
 // clientData structure definition
 struct clientData
 {
@@ -46,9 +48,9 @@ int main(int argc, char *argv[])
         } else {
             // initialize file with 100 empty records in a single write (faster)
             struct clientData blankClient = {0, "", "", 0.0};
-            struct clientData blankRecords[100];
-            for (int i = 0; i < 100; i++) blankRecords[i] = blankClient;
-            fwrite(blankRecords, sizeof(struct clientData), 100, cfPtr);
+            struct clientData blankRecords[MAX_RECORDS];
+            for (int i = 0; i < MAX_RECORDS; i++) blankRecords[i] = blankClient;
+            fwrite(blankRecords, sizeof(struct clientData), MAX_RECORDS, cfPtr);
             rewind(cfPtr);
         }
     }
@@ -122,8 +124,8 @@ void textFile(FILE *readPtr)
         rewind(readPtr); // sets pointer to beginning of file
         fprintf(writePtr, "%-6s%-16s%-11s%10s\n", "Acct", "Last Name", "First Name", "Balance");
 
-        // read exactly 100 records (faster and safer than feof loop)
-        for (int i = 0; i < 100; i++)
+        // read exactly MAX_RECORDS (faster and safer than feof loop)
+        for (int i = 0; i < MAX_RECORDS; i++)
         {
             fread(&client, sizeof(struct clientData), 1, readPtr);
 
