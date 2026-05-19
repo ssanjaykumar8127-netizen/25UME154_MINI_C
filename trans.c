@@ -19,6 +19,7 @@ void updateRecord(FILE *fPtr);
 void newRecord(FILE *fPtr);
 void deleteRecord(FILE *fPtr);
 void listRecords(FILE *fPtr); // prototype for listRecords
+void transferFunds(FILE *fPtr); // prototype for transferFunds
 
 int main(int argc, char *argv[])
 {
@@ -42,7 +43,7 @@ int main(int argc, char *argv[])
     }
 
     // enable user to specify action
-    while ((choice = enterChoice()) != 6)
+    while ((choice = enterChoice()) != 7)
     {
         switch (choice)
         {
@@ -65,6 +66,10 @@ int main(int argc, char *argv[])
         // list all accounts
         case 5:
             listRecords(cfPtr);
+            break;
+        // transfer funds
+        case 6:
+            transferFunds(cfPtr);
             break;
         // display if user does not select valid choice
         default:
@@ -241,7 +246,8 @@ unsigned int enterChoice(void)
                  "3 - add a new account\n"
                  "4 - delete an account\n"
                  "5 - list all accounts\n"
-                 "6 - end program\n? ");
+                 "6 - transfer funds\n"
+                 "7 - end program\n? ");
 
     if (scanf("%u", &menuChoice) != 1) {
         // clear input buffer to prevent infinite loops if char is entered
@@ -272,3 +278,69 @@ void listRecords(FILE *fPtr)
         }
     }
 } // end function listRecords
+
+// transfer funds between two accounts
+void transferFunds(FILE *fPtr)
+{
+    unsigned int srcAccount, destAccount;
+    double amount;
+    struct clientData srcClient = {0, "", "", 0.0};
+    struct clientData destClient = {0, "", "", 0.0};
+
+    printf("%s", "Enter source account ( 1 - 100 ): ");
+    scanf("%u", &srcAccount);
+    if (srcAccount < 1 || srcAccount > 100) {
+        puts("Invalid source account number.");
+        return;
+    }
+
+    printf("%s", "Enter destination account ( 1 - 100 ): ");
+    scanf("%u", &destAccount);
+    if (destAccount < 1 || destAccount > 100) {
+        puts("Invalid destination account number.");
+        return;
+    }
+
+    // Read source account
+    fseek(fPtr, (srcAccount - 1) * sizeof(struct clientData), SEEK_SET);
+    fread(&srcClient, sizeof(struct clientData), 1, fPtr);
+    if (srcClient.acctNum == 0) {
+        printf("Source account #%u has no information.\n", srcAccount);
+        return;
+    }
+
+    // Read destination account
+    fseek(fPtr, (destAccount - 1) * sizeof(struct clientData), SEEK_SET);
+    fread(&destClient, sizeof(struct clientData), 1, fPtr);
+    if (destClient.acctNum == 0) {
+        printf("Destination account #%u has no information.\n", destAccount);
+        return;
+    }
+
+    printf("Enter transfer amount: ");
+    scanf("%lf", &amount);
+    
+    if (amount <= 0) {
+        puts("Transfer amount must be positive.");
+        return;
+    }
+    
+    if (srcClient.balance < amount) {
+        puts("Insufficient funds in source account.");
+        return;
+    }
+
+    // Perform transfer
+    srcClient.balance -= amount;
+    destClient.balance += amount;
+
+    // Write source account back
+    fseek(fPtr, (srcAccount - 1) * sizeof(struct clientData), SEEK_SET);
+    fwrite(&srcClient, sizeof(struct clientData), 1, fPtr);
+
+    // Write destination account back
+    fseek(fPtr, (destAccount - 1) * sizeof(struct clientData), SEEK_SET);
+    fwrite(&destClient, sizeof(struct clientData), 1, fPtr);
+    
+    printf("Successfully transferred %.2f from account %u to account %u.\n", amount, srcAccount, destAccount);
+} // end function transferFunds
