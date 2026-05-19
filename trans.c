@@ -18,21 +18,31 @@ void textFile(FILE *readPtr);
 void updateRecord(FILE *fPtr);
 void newRecord(FILE *fPtr);
 void deleteRecord(FILE *fPtr);
+void listRecords(FILE *fPtr); // prototype for listRecords
 
 int main(int argc, char *argv[])
 {
     FILE *cfPtr;         // credit.dat file pointer
     unsigned int choice; // user's choice
 
-    // fopen opens the file; exits if file cannot be opened
+    // fopen opens the file; if it doesn't exist, create it
     if ((cfPtr = fopen("credit.dat", "rb+")) == NULL)
     {
-        printf("%s: File could not be opened.\n", argv[0]);
-        exit(-1);
+        if ((cfPtr = fopen("credit.dat", "wb+")) == NULL) {
+            printf("%s: File could not be opened.\n", argv[0]);
+            exit(-1);
+        } else {
+            // initialize file with 100 empty records
+            struct clientData blankClient = {0, "", "", 0.0};
+            for (unsigned int i = 1; i <= 100; ++i) {
+                fwrite(&blankClient, sizeof(struct clientData), 1, cfPtr);
+            }
+            rewind(cfPtr);
+        }
     }
 
     // enable user to specify action
-    while ((choice = enterChoice()) != 5)
+    while ((choice = enterChoice()) != 6)
     {
         switch (choice)
         {
@@ -51,6 +61,10 @@ int main(int argc, char *argv[])
         // delete existing record
         case 4:
             deleteRecord(cfPtr);
+            break;
+        // list all accounts
+        case 5:
+            listRecords(cfPtr);
             break;
         // display if user does not select valid choice
         default:
@@ -107,7 +121,12 @@ void updateRecord(FILE *fPtr)
 
     // obtain number of account to update
     printf("%s", "Enter account to update ( 1 - 100 ): ");
-    scanf("%d", &account);
+    scanf("%u", &account);
+
+    if (account < 1 || account > 100) {
+        puts("Invalid account number.");
+        return;
+    }
 
     // move file pointer to correct record in file
     fseek(fPtr, (account - 1) * sizeof(struct clientData), SEEK_SET);
@@ -146,7 +165,12 @@ void deleteRecord(FILE *fPtr)
 
     // obtain number of account to delete
     printf("%s", "Enter account number to delete ( 1 - 100 ): ");
-    scanf("%d", &accountNum);
+    scanf("%u", &accountNum);
+
+    if (accountNum < 1 || accountNum > 100) {
+        puts("Invalid account number.");
+        return;
+    }
 
     // move file pointer to correct record in file
     fseek(fPtr, (accountNum - 1) * sizeof(struct clientData), SEEK_SET);
@@ -175,7 +199,12 @@ void newRecord(FILE *fPtr)
 
     // obtain number of account to create
     printf("%s", "Enter new account number ( 1 - 100 ): ");
-    scanf("%d", &accountNum);
+    scanf("%u", &accountNum);
+
+    if (accountNum < 1 || accountNum > 100) {
+        puts("Invalid account number.");
+        return;
+    }
 
     // move file pointer to correct record in file
     fseek(fPtr, (accountNum - 1) * sizeof(struct clientData), SEEK_SET);
@@ -211,8 +240,35 @@ unsigned int enterChoice(void)
                  "2 - update an account\n"
                  "3 - add a new account\n"
                  "4 - delete an account\n"
-                 "5 - end program\n? ");
+                 "5 - list all accounts\n"
+                 "6 - end program\n? ");
 
-    scanf("%u", &menuChoice); // receive choice from user
+    if (scanf("%u", &menuChoice) != 1) {
+        // clear input buffer to prevent infinite loops if char is entered
+        while (getchar() != '\n');
+        menuChoice = 0; // return invalid choice
+    }
     return menuChoice;
 } // end function enterChoice
+
+// list all account information
+void listRecords(FILE *fPtr)
+{
+    struct clientData client = {0, "", "", 0.0};
+    int result;
+
+    rewind(fPtr); // sets pointer to beginning of file
+    printf("\n%-6s%-16s%-11s%10s\n", "Acct", "Last Name", "First Name", "Balance");
+    printf("---------------------------------------------\n");
+
+    while (!feof(fPtr))
+    {
+        result = fread(&client, sizeof(struct clientData), 1, fPtr);
+
+        // write single record to console
+        if (result != 0 && client.acctNum != 0)
+        {
+            printf("%-6d%-16s%-11s%10.2f\n", client.acctNum, client.lastName, client.firstName, client.balance);
+        }
+    }
+} // end function listRecords
