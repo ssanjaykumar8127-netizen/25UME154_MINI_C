@@ -30,6 +30,7 @@ void listRecords(FILE *fPtr); // prototype for listRecords
 void transferFunds(FILE *fPtr); // prototype for transferFunds
 void searchRecord(FILE *fPtr); // prototype for searchRecord
 void viewRecord(FILE *fPtr); // prototype for efficient viewRecord
+void bankStatistics(FILE *fPtr); // prototype for bank statistics
 
 int main(int argc, char *argv[])
 {
@@ -53,7 +54,7 @@ int main(int argc, char *argv[])
     }
 
     // enable user to specify action
-    while ((choice = enterChoice()) != 9)
+    while ((choice = enterChoice()) != 10)
     {
         switch (choice)
         {
@@ -88,6 +89,10 @@ int main(int argc, char *argv[])
         // view single record efficiently
         case 8:
             viewRecord(cfPtr);
+            break;
+        // calculate bank statistics
+        case 9:
+            bankStatistics(cfPtr);
             break;
         // display if user does not select valid choice
         default:
@@ -266,7 +271,8 @@ unsigned int enterChoice(void)
                  "6 - transfer funds\n"
                  "7 - search account by last name\n"
                  "8 - view account by ID (Efficient O(1) lookup)\n"
-                 "9 - end program\n? ");
+                 "9 - bank statistics\n"
+                 "10 - end program\n? ");
 
     if (scanf("%u", &menuChoice) != 1) {
         // clear input buffer to prevent infinite loops if char is entered
@@ -428,3 +434,29 @@ void viewRecord(FILE *fPtr)
         printf("%-6d%-16s%-11s%10.2f\n", client.acctNum, client.lastName, client.firstName, client.balance);
     }
 } // end function viewRecord
+
+// calculate and display bank statistics
+void bankStatistics(FILE *fPtr)
+{
+    struct clientData client = {0, "", "", 0.0};
+    int activeAccountsCount = 0;
+    double totalDeposits = 0.0;
+
+    rewind(fPtr); // sets pointer to beginning of file
+
+    while (!feof(fPtr))
+    {
+        int result = fread(&client, sizeof(struct clientData), 1, fPtr);
+
+        if (result != 0 && client.acctNum != 0)
+        {
+            activeAccountsCount++;
+            totalDeposits += client.balance;
+        }
+    }
+
+    printf("\n==== BANK STATISTICS ====\n");
+    printf("Total Active Accounts: %d\n", activeAccountsCount);
+    printf("Total Bank Deposits:   %.2f\n", totalDeposits);
+    printf("=========================\n");
+} // end function bankStatistics
