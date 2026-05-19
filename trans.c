@@ -1,8 +1,16 @@
+/****************************************************************
+ * Project: Transaction Processing System
+ * Course: 24UCS271 Lab Mini Project
+ * Description: A system to manage banking records securely and efficiently.
+ ****************************************************************/
+
 // Bank-account program reads a random-access file sequentially,
 // updates data already written to the file, creates new data to
 // be placed in the file, and deletes data previously in the file.
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
 // clientData structure definition
 struct clientData
 {
@@ -20,6 +28,8 @@ void newRecord(FILE *fPtr);
 void deleteRecord(FILE *fPtr);
 void listRecords(FILE *fPtr); // prototype for listRecords
 void transferFunds(FILE *fPtr); // prototype for transferFunds
+void searchRecord(FILE *fPtr); // prototype for searchRecord
+void viewRecord(FILE *fPtr); // prototype for efficient viewRecord
 
 int main(int argc, char *argv[])
 {
@@ -43,7 +53,7 @@ int main(int argc, char *argv[])
     }
 
     // enable user to specify action
-    while ((choice = enterChoice()) != 7)
+    while ((choice = enterChoice()) != 9)
     {
         switch (choice)
         {
@@ -70,6 +80,14 @@ int main(int argc, char *argv[])
         // transfer funds
         case 6:
             transferFunds(cfPtr);
+            break;
+        // search record
+        case 7:
+            searchRecord(cfPtr);
+            break;
+        // view single record efficiently
+        case 8:
+            viewRecord(cfPtr);
             break;
         // display if user does not select valid choice
         default:
@@ -247,7 +265,9 @@ unsigned int enterChoice(void)
                  "4 - delete an account\n"
                  "5 - list all accounts\n"
                  "6 - transfer funds\n"
-                 "7 - end program\n? ");
+                 "7 - search account by last name\n"
+                 "8 - view account by ID (Efficient O(1) lookup)\n"
+                 "9 - end program\n? ");
 
     if (scanf("%u", &menuChoice) != 1) {
         // clear input buffer to prevent infinite loops if char is entered
@@ -344,3 +364,68 @@ void transferFunds(FILE *fPtr)
     
     printf("Successfully transferred %.2f from account %u to account %u.\n", amount, srcAccount, destAccount);
 } // end function transferFunds
+
+// search for an account by last name
+void searchRecord(FILE *fPtr)
+{
+    char searchName[15];
+    struct clientData client = {0, "", "", 0.0};
+    int found = 0;
+
+    printf("%s", "Enter last name to search for: ");
+    scanf("%14s", searchName);
+
+    rewind(fPtr); // sets pointer to beginning of file
+    printf("\n%-6s%-16s%-11s%10s\n", "Acct", "Last Name", "First Name", "Balance");
+    printf("---------------------------------------------\n");
+
+    while (!feof(fPtr))
+    {
+        int result = fread(&client, sizeof(struct clientData), 1, fPtr);
+
+        // write single record to console if name matches
+        if (result != 0 && client.acctNum != 0 && strcmp(client.lastName, searchName) == 0)
+        {
+            printf("%-6d%-16s%-11s%10.2f\n", client.acctNum, client.lastName, client.firstName, client.balance);
+            found = 1;
+        }
+    }
+
+    if (!found) {
+        printf("No accounts found with last name '%s'.\n", searchName);
+    }
+} // end function searchRecord
+
+// view a single record using efficient O(1) lookup
+void viewRecord(FILE *fPtr)
+{
+    unsigned int accountNum;
+    struct clientData client = {0, "", "", 0.0};
+
+    // obtain number of account to view
+    printf("%s", "Enter account number to view ( 1 - 100 ): ");
+    scanf("%u", &accountNum);
+
+    if (accountNum < 1 || accountNum > 100) {
+        puts("Invalid account number.");
+        return;
+    }
+
+    // move file pointer to correct record in file - O(1) efficiency
+    fseek(fPtr, (accountNum - 1) * sizeof(struct clientData), SEEK_SET);
+    
+    // read record from file
+    fread(&client, sizeof(struct clientData), 1, fPtr);
+    
+    // display error if record does not exist
+    if (client.acctNum == 0)
+    {
+        printf("Account %u does not exist.\n", accountNum);
+    }
+    else
+    {
+        printf("\n%-6s%-16s%-11s%10s\n", "Acct", "Last Name", "First Name", "Balance");
+        printf("---------------------------------------------\n");
+        printf("%-6d%-16s%-11s%10.2f\n", client.acctNum, client.lastName, client.firstName, client.balance);
+    }
+} // end function viewRecord
