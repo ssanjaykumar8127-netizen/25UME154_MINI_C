@@ -158,7 +158,7 @@ void updateRecord(FILE *fPtr)
     printf("%s", "Enter account to update ( 1 - 100 ): ");
     scanf("%u", &account);
 
-    if (account < 1 || account > 100) {
+    if (!isValidAccount(account)) {
         puts("Invalid account number.");
         return;
     }
@@ -202,7 +202,7 @@ void deleteRecord(FILE *fPtr)
     printf("%s", "Enter account number to delete ( 1 - 100 ): ");
     scanf("%u", &accountNum);
 
-    if (accountNum < 1 || accountNum > 100) {
+    if (!isValidAccount(accountNum)) {
         puts("Invalid account number.");
         return;
     }
@@ -236,7 +236,7 @@ void newRecord(FILE *fPtr)
     printf("%s", "Enter new account number ( 1 - 100 ): ");
     scanf("%u", &accountNum);
 
-    if (accountNum < 1 || accountNum > 100) {
+    if (!isValidAccount(accountNum)) {
         puts("Invalid account number.");
         return;
     }
