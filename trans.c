@@ -44,14 +44,16 @@ int main(int argc, char *argv[])
             printf("%s: File could not be opened.\n", argv[0]);
             exit(-1);
         } else {
-            // initialize file with 100 empty records
+            // initialize file with 100 empty records in a single write (faster)
             struct clientData blankClient = {0, "", "", 0.0};
-            for (unsigned int i = 1; i <= 100; ++i) {
-                fwrite(&blankClient, sizeof(struct clientData), 1, cfPtr);
-            }
+            struct clientData blankRecords[100];
+            for (int i = 0; i < 100; i++) blankRecords[i] = blankClient;
+            fwrite(blankRecords, sizeof(struct clientData), 100, cfPtr);
             rewind(cfPtr);
         }
     }
+    // use a larger I/O buffer for faster file operations
+    setvbuf(cfPtr, NULL, _IOFBF, 65536);
 
     // enable user to specify action
     while ((choice = enterChoice()) != 10)
