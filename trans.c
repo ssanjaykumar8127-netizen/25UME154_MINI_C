@@ -288,18 +288,18 @@ unsigned int enterChoice(void)
 void listRecords(FILE *fPtr)
 {
     struct clientData client = {0, "", "", 0.0};
-    int result;
 
     rewind(fPtr); // sets pointer to beginning of file
     printf("\n%-6s%-16s%-11s%10s\n", "Acct", "Last Name", "First Name", "Balance");
     printf("---------------------------------------------\n");
 
-    while (!feof(fPtr))
+    // read exactly 100 records (faster and safer than feof loop)
+    for (int i = 0; i < 100; i++)
     {
-        result = fread(&client, sizeof(struct clientData), 1, fPtr);
+        fread(&client, sizeof(struct clientData), 1, fPtr);
 
-        // write single record to console
-        if (result != 0 && client.acctNum != 0)
+        // print record if active
+        if (client.acctNum != 0)
         {
             printf("%-6d%-16s%-11s%10.2f\n", client.acctNum, client.lastName, client.firstName, client.balance);
         }
@@ -386,12 +386,13 @@ void searchRecord(FILE *fPtr)
     printf("\n%-6s%-16s%-11s%10s\n", "Acct", "Last Name", "First Name", "Balance");
     printf("---------------------------------------------\n");
 
-    while (!feof(fPtr))
+    // read exactly 100 records (faster and safer than feof loop)
+    for (int i = 0; i < 100; i++)
     {
-        int result = fread(&client, sizeof(struct clientData), 1, fPtr);
+        fread(&client, sizeof(struct clientData), 1, fPtr);
 
-        // write single record to console if name matches
-        if (result != 0 && client.acctNum != 0 && strcmp(client.lastName, searchName) == 0)
+        // print record if name matches
+        if (client.acctNum != 0 && strcmp(client.lastName, searchName) == 0)
         {
             printf("%-6d%-16s%-11s%10.2f\n", client.acctNum, client.lastName, client.firstName, client.balance);
             found = 1;
@@ -446,11 +447,12 @@ void bankStatistics(FILE *fPtr)
 
     rewind(fPtr); // sets pointer to beginning of file
 
-    while (!feof(fPtr))
+    // read exactly 100 records (faster and safer than feof loop)
+    for (int i = 0; i < 100; i++)
     {
-        int result = fread(&client, sizeof(struct clientData), 1, fPtr);
+        fread(&client, sizeof(struct clientData), 1, fPtr);
 
-        if (result != 0 && client.acctNum != 0)
+        if (client.acctNum != 0)
         {
             activeAccountsCount++;
             totalDeposits += client.balance;
